@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Diagnostic</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --panel: #232321;
+      --panel-2: #2a2a28;
+      --line: #3a3a36;
+      --text: #f2f2ea;
+      --muted: #b8b7ae;
+      --green: #2f8f2f;
+      --green-bg: #183d14;
+      --amber: #a67c18;
+      --amber-bg: #4b3a11;
+      --blue: #3f8de0;
+      --blue-bg: #173961;
+      --red: #cf4d4d;
+      --red-bg: #4b1818;
+      --cpu: #4b95e8;
+      --ecore: #8d8d87;
+      --gpu: #4fc4b6;
+      --shadow: 0 1px 0 rgba(255,255,255,.04) inset;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+    }
+    .wrap {
+      width: 760px;
+      margin: 10px auto 40px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .title {
+      display: flex;
+      gap: 12px;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+    .title h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn, .search {
+      background: #161616;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+    .btn { cursor: pointer; }
+    .pill {
+      background: var(--green-bg);
+      color: #8fe58f;
+      border: 1px solid #245d24;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 12px;
+      white-space: nowrap;
+    }
+    .grid-3, .grid-4, .grid-2 {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .card {
+      background: var(--panel);
+      border: 1px solid #2f2f2b;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px;
+    }
+    .section-title {
+      margin: 18px 0 10px;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+    .eyebrow {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-bottom: 6px;
+    }
+    .hero-value {
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+    .hero-sub {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .metric-big {
+      font-size: 17px;
+      font-weight: 900;
+      margin-top: 4px;
+    }
+    .metric-big span {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .note {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #89d589;
+    }
+    .muted-note { color: var(--muted); }
+    .status-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .ok { background: var(--green-bg); color: #8fe58f; }
+    .warm { background: var(--amber-bg); color: #e8c15a; }
+    .info { background: var(--blue-bg); color: #8fc1ff; }
+    .bad { background: var(--red-bg); color: #ff9898; }
+
+    .rows { display: flex; flex-direction: column; gap: 9px; }
+    .row {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 10px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .row strong {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .divider { height: 1px; background: var(--line); margin: 4px 0; }
+
+    .bar-panel {
+      background: var(--panel);
+      border: 1px solid #2f2f2b;
+      border-radius: var(--radius);
+      padding: 14px 16px 10px;
+      margin-bottom: 12px;
+    }
+    .chart-wrap {
+      height: 220px;
+      border-top: 2px solid #d7d7d0;
+      border-bottom: 2px solid #d7d7d0;
+      position: relative;
+      margin-top: 12px;
+      padding-top: 10px;
+    }
+    .grid-lines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .grid-lines .line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      border-top: 2px solid rgba(220,220,210,.9);
+    }
+    .line.l1 { top: 20%; }
+    .line.l2 { top: 40%; }
+    .line.l3 { top: 60%; }
+    .line.l4 { top: 80%; }
+    .bars {
+      height: 100%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+      padding: 0 4px;
+    }
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      height: 100%;
+      min-width: 0;
+    }
+    .bar {
+      width: 20px;
+      background: var(--cpu);
+      border-radius: 2px 2px 0 0;
+      min-height: 2px;
+    }
+    .bar.ecore { background: var(--ecore); }
+    .bar.warn { background: #d9cf6b; }
+    .bar-label {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .legend {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      margin-right: 7px;
+      vertical-align: -1px;
+    }
+
+    .progress {
+      background: #1a1a19;
+      border-radius: 999px;
+      overflow: hidden;
+      height: 8px;
+      margin-top: 5px;
+    }
+    .progress > span {
+      display: block;
+      height: 100%;
+      background: var(--gpu);
+      border-radius: 999px;
+    }
+
+    .health-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .health-item {
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 12px;
+      line-height: 1.5;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .health-item.green { background: #194915; color: #99e48e; }
+    .health-item.amber { background: #574412; color: #e7c164; }
+    .health-item.blue { background: #23446c; color: #9cc3ff; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">
+        <h1>System diagnostic</h1>
+        <div class="subtitle" id="sampleMeta">Live HWiNFO stream</div>
+      </div>
+      <div class="controls">
+        <input id="searchInput" class="search" placeholder="Search sensors" />
+        <button id="refreshBtn" class="btn">Refresh</button>
+        <div class="pill" id="healthPill">Connecting...</div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card"><div class="eyebrow">CPU</div><div class="hero-value" id="cpuHero">Loading...</div><div class="hero-sub" id="cpuSub"></div></div>
+      <div class="card"><div class="eyebrow">RAM</div><div class="hero-value" id="ramHero">Loading...</div><div class="hero-sub" id="ramSub"></div></div>
+      <div class="card"><div class="eyebrow">GPU</div><div class="hero-value" id="gpuHero">Loading...</div><div class="hero-sub" id="gpuSub"></div></div>
+    </div>
+
+    <div class="section-title">CPU — Temperatures</div>
+    <div class="bar-panel">
+      <div class="chart-wrap">
+        <div class="grid-lines">
+          <div class="line l1"></div>
+          <div class="line l2"></div>
+          <div class="line l3"></div>
+          <div class="line l4"></div>
+        </div>
+        <div class="bars" id="cpuBars"></div>
+      </div>
+      <div class="legend">
+        <div><span class="dot" style="background: var(--cpu)"></span>P-cores (perf)</div>
+        <div><span class="dot" style="background: var(--ecore)"></span>E-cores (efficiency)</div>
+        <div><span class="dot" style="background: #d9cf6b"></span>TJMAX / high-temp core</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-title" style="margin-top:0">CPU package</div>
+        <div class="rows" id="cpuPackageRows"></div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin-top:0">CPU utilization</div>
+        <div class="rows" id="cpuUtilRows"></div>
+      </div>
+    </div>
+
+    <div class="section-title">GPU</div>
+    <div class="grid-4" id="gpuStats"></div>
+    <div class="card" id="gpuDetailCard" style="margin-bottom:12px"></div>
+
+    <div class="section-title">Memory (DDR5)</div>
+    <div class="grid-4" id="memoryStats"></div>
+
+    <div class="section-title">Storage</div>
+    <div class="grid-2" id="storageCards"></div>
+
+    <div class="section-title">Health summary & recommendations</div>
+    <div class="health-list" id="healthList"></div>
+  </div>
+
+  <script>
+    let socket;
+    let latest = [];
+    let latestMeta = {};
+
+    const $ = (id) => document.getElementById(id);
+    const fmt = (n, d=1) => Number.isFinite(n) ? Number(n).toFixed(d) : '--';
+    const fmtInt = (n) => Number.isFinite(n) ? Math.round(n) : '--';
+    const lower = (s) => String(s || '').toLowerCase();
+
+    function pick(readings, includes = [], excludes = []) {
+      return readings.find(r => {
+        const hay = `${r.sensor} ${r.label}`.toLowerCase();
+        return includes.every(i => hay.includes(i)) && excludes.every(e => !hay.includes(e));
+      });
+    }
+    function pickAll(readings, includes = [], excludes = []) {
+      return readings.filter(r => {
+        const hay = `${r.sensor} ${r.label}`.toLowerCase();
+        return includes.every(i => hay.includes(i)) && excludes.every(e => !hay.includes(e));
+      });
+    }
+    function statusClass(v, warm, bad) {
+      if (!Number.isFinite(v)) return 'info';
+      if (v >= bad) return 'bad';
+      if (v >= warm) return 'warm';
+      return 'ok';
+    }
+    function pill(text, cls) { return `<span class="status-tag ${cls}">${text}</span>`; }
+
+    function renderHero(readings) {
+      const cpu = pick(readings, ['cpu [#0]']) || pick(readings, ['cpu']);
+      const gpu = pick(readings, ['gpu [#0]']) || pick(readings, ['gpu']);
+      const memTotal = pick(readings, ['physical memory available']) && pick(readings, ['physical memory used'])
+        ? pick(readings, ['physical memory available']).value + pick(readings, ['physical memory used']).value
+        : null;
+
+      $('cpuHero').textContent = cpu ? cpu.sensor.replace(/^CPU \[#0\]:\s*/,'') : 'CPU not found';
+      $('cpuSub').textContent = 'Live telemetry from HWiNFO';
+
+      $('ramHero').innerHTML = memTotal ? `${fmt(memTotal,0)} <span style="font-size:13px;color:#b8b7ae;font-weight:700">GB</span>` : 'RAM not found';
+      $('ramSub').textContent = 'System memory';
+
+      const gpuSensor = pick(readings, ['gpu'])?.sensor || 'GPU not found';
+      const gpuTemp = pick(readings, ['gpu temperature']) || pick(readings, ['core temperature'], ['cpu']);
+      $('gpuHero').textContent = gpuSensor.replace(/^GPU \[#\d+\]:\s*/, '');
+      $('gpuSub').textContent = gpuTemp ? `${fmt(gpuTemp.value,1)}°C current` : 'Live telemetry';
+    }
+
+    function renderCpuBars(readings) {
+      const bars = $('cpuBars');
+      // Match "P-core N: XX.X C" and "E-core N: XX.X C" format from HWiNFO DTS section
+      const coreTemps = readings.filter(r => {
+        const l = lower(r.label);
+        return (l.startsWith('p-core ') || l.startsWith('e-core ')) && l.includes(':');
+      });
+      // Also grab Distance to TjMAX
+      const tjmax = readings.filter(r => lower(r.label).includes('distance to tjmax'));
+      coreTemps.sort((a,b) => a.label.localeCompare(b.label, undefined, {numeric:true}));
+      bars.innerHTML = '';
+      coreTemps.forEach(r => {
+        const l = lower(r.label);
+        const isE = l.startsWith('e-core');
+        // extract numeric temp from "P-core N: 52.0 C" -> 52
+        const temp = parseFloat(r.label.split(':')[1].trim());
+        const h = Math.max(4, Math.min(100, temp));
+        const shortLabel = r.label.replace(/:\s*[\d.]+\s*C$/, '').replace('P-core ', 'P').replace('E-core ', 'E');
+        // check tjmax distance for this core
+        const tj = tjmax.find(t => t.label.includes(shortLabel.replace('P','P-core').replace('E','E-core')));
+        const div = document.createElement('div');
+        div.className = 'bar-col';
+        div.innerHTML = `<div class="bar ${isE ? 'ecore' : ''}" style="height:${h}%"></div><div class="bar-label">${shortLabel}</div>`;
+        bars.appendChild(div);
+      });
+      if (!coreTemps.length) bars.innerHTML = '<div style="color:#b8b7ae;font-size:12px">No per-core temperature sensors found.</div>';
+    }
+
+    function renderCpuPanels(readings) {
+      const pkgTemp = pick(readings, ['cpu package']);
+      const coreMax = pick(readings, ['core max']);
+      const pkgPower = pick(readings, ['package power']);
+      const pl1 = pick(readings, ['pl1 power limit']);
+      const pl2 = pick(readings, ['pl2 power limit']);
+      const throttle = pick(readings, ['thermal throttling']);
+      const totalUsage = pick(readings, ['total cpu usage']);
+      const avgClock = pick(readings, ['average effective clock']) || pick(readings, ['core effective clocks']);
+      const pcoreMax = pick(readings, ['p-core 0 clock']) || pick(readings, ['core clocks']);
+      const vrTemp = pick(readings, ['vr vcc temperature']) || pick(readings, ['vr temperature']);
+      const pchTemp = pick(readings, ['pch temperature']);
+
+      $('cpuPackageRows').innerHTML = [
+        rowHtml('Package temp', pkgTemp, `avg ${fmt(pkgTemp?.avg)}°C · peak ${fmt(pkgTemp?.max)}°C`, statusClass(pkgTemp?.max, 75, 90), pkgTemp?.max >= 90 ? 'hot' : 'ok'),
+        rowHtml('Core max', coreMax, `avg ${fmt(coreMax?.avg)}°C · peak ${fmt(coreMax?.max)}°C`, statusClass(coreMax?.max, 75, 90), coreMax?.max >= 90 ? 'hot' : 'ok'),
+        rowHtml('Package power', pkgPower, `avg ${fmt(pkgPower?.avg)}W · peak ${fmt(pkgPower?.max)}W`, 'info', 'live'),
+        `<div class="divider"></div>`,
+        rowHtml('PL1 / PL2 limits', null, `${fmtInt(pl1?.value)}W / ${fmtInt(pl2?.value)}W`, 'info', 'set'),
+        rowHtml('Thermal throttling', throttle, `${fmtInt(throttle?.value || 0)} events`, throttle?.value > 0 ? 'bad' : 'ok', throttle?.value > 0 ? 'throttling' : 'none'),
+      ].join('');
+
+      $('cpuUtilRows').innerHTML = [
+        rowHtml('Total CPU usage', totalUsage, `avg ${fmt(totalUsage?.avg)}% · peak ${fmt(totalUsage?.max)}%`, 'info', 'load'),
+        rowHtml('Avg core clock', avgClock, `~${fmtInt(avgClock?.avg)} MHz`, 'info', 'clock'),
+        rowHtml('P-core boost max', pcoreMax, `${fmt(pcoreMax?.max/1000,1)} GHz`, 'info', 'boost'),
+        `<div class="divider"></div>`,
+        rowHtml('VR VCC temp', vrTemp, `avg ${fmt(vrTemp?.avg)}°C · peak ${fmt(vrTemp?.max)}°C`, statusClass(vrTemp?.max, 70, 85), vrTemp?.max >= 70 ? 'warm' : 'ok'),
+        rowHtml('PCH temp', pchTemp, `avg ${fmt(pchTemp?.avg)}°C · peak ${fmt(pchTemp?.max)}°C`, statusClass(pchTemp?.max, 65, 80), pchTemp?.max >= 65 ? 'warm' : 'ok'),
+      ].join('');
+    }
+
+    function rowHtml(label, reading, right, cls='info', tag='info') {
+      return `<div class="row"><div>${label}</div><div><strong>${right || '--'}</strong>${pill(tag, cls)}</div></div>`;
+    }
+
+    function statCard(title, big, sub, note='') {
+      return `<div class="card"><div class="eyebrow">${title}</div><div class="metric-big">${big}</div><div class="hero-sub">${sub || ''}</div>${note ? `<div class="note">${note}</div>` : ''}</div>`;
+    }
+
+    function renderGpu(readings) {
+      const coreTemp = pick(readings, ['gpu temperature']);
+      const hotSpot = pick(readings, ['hot spot temperature']);
+      const thermalLimit = pick(readings, ['thermal limit']);
+      const power = pick(readings, ['gpu power']) || pick(readings, ['board power']);
+      const load = pick(readings, ['gpu core load']) || pick(readings, ['gpu utilization']);
+      $('gpuStats').innerHTML = [
+        statCard('Core temp', `${fmt(coreTemp?.avg)}<span>°C avg</span>`, coreTemp ? `peak ${fmt(coreTemp.max)}°C` : ''),
+        statCard('Hot spot', `${fmt(hotSpot?.avg)}<span>°C avg</span>`, hotSpot ? `peak ${fmt(hotSpot.max)}°C` : ''),
+        statCard('Power draw', `${fmt(power?.avg)}<span>W avg</span>`, power ? `peak ${fmt(power.max)}W · limit ${thermalLimit ? fmt(thermalLimit.value)+'W' : '--'}` : ''),
+        statCard('Core load', `${fmt(load?.avg)}<span>% avg</span>`, load ? `peak ${fmt(load.max)}%` : ''),
+      ].join('');
+
+      const clock = pick(readings, ['gpu clock']) || pick(readings, ['graphics clock']);
+      const memClock = pick(readings, ['gpu memory clock']);
+      const vramAlloc = pick(readings, ['video memory available']) || pick(readings, ['dedicated memory']);
+      const vramUse = pick(readings, ['gpu memory usage']) || pick(readings, ['memory controller load']);
+      $('gpuDetailCard').innerHTML = `
+        <div class="grid-2" style="margin:0">
+          <div class="rows">
+            ${rowHtml('GPU clock', clock, `avg ${fmt(clock?.avg,0)} · peak ${fmt(clock?.max,0)} MHz`, 'info', 'clock')}
+            ${rowHtml('VRAM allocated', vramAlloc, `${fmt(vramAlloc?.value,0)} ${vramAlloc?.unit || ''}`, 'info', 'mem')}
+            <div>
+              <div class="row" style="grid-template-columns:1fr auto"><div>VRAM usage</div><div><strong>${fmt(vramUse?.value)}${vramUse?.unit || '%'}</strong></div></div>
+              <div class="progress"><span style="width:${Math.min(100, vramUse?.value || 0)}%"></span></div>
+            </div>
+          </div>
+          <div class="rows">
+            ${rowHtml('Perf limit — power', pick(readings,['perf limit','power']), `${fmtInt(pick(readings,['perf limit','power'])?.value || 0)} samples`, 'info', 'watch')}
+            ${rowHtml('Perf limit — thermal', pick(readings,['perf limit','thermal']), `${fmtInt(pick(readings,['perf limit','thermal'])?.value || 0)} samples`, 'info', 'watch')}
+            ${rowHtml('Perf limit — utilization', pick(readings,['perf limit','utilization']), `${fmtInt(pick(readings,['perf limit','utilization'])?.value || 0)} samples`, 'info', 'expected')}
+            ${rowHtml('PCIe link', pick(readings,['pcie link speed']) || pick(readings,['bus interface']), `${fmt(pick(readings,['pcie link speed'])?.value || pick(readings,['bus interface'])?.value,0)} ${pick(readings,['pcie link speed'])?.unit || ''}`, 'info', 'link')}
+          </div>
+        </div>`;
+    }
+
+    function renderMemory(readings) {
+      const used = pick(readings, ['physical memory used']);
+      const avail = pick(readings, ['physical memory available']);
+      const load = pick(readings, ['physical memory load']);
+      const total = used && avail ? used.value + avail.value : null;
+      $('memoryStats').innerHTML = [
+        statCard('Total', `${fmt(total,0)}<span> GB</span>`, ''),
+        statCard('Used', `${fmt(used?.value,1)}<span> GB</span>`, `${fmt(load?.avg || load?.value)}% avg`),
+        statCard('Speed', '--', 'Pulling SPD speed later'),
+        statCard('Timings', '--', 'Available if exposed by RAM sensor'),
+      ].join('');
+    }
+
+    function renderStorage(readings) {
+      const drives = [...new Set(readings.filter(r => lower(r.sensor).includes('drive') || lower(r.sensor).includes('s.m.a.r.t') || lower(r.sensor).includes('nvme')).map(r => r.sensor))].slice(0, 4);
+      $('storageCards').innerHTML = drives.map(sensor => {
+        const rs = readings.filter(r => r.sensor === sensor);
+        const temp = rs.find(r => lower(r.label).includes('temperature'));
+        const life = rs.find(r => lower(r.label).includes('remaining life'));
+        const spare = rs.find(r => lower(r.label).includes('available spare'));
+        const written = rs.find(r => lower(r.label).includes('total host writes') || lower(r.label).includes('total written'));
+        const read = rs.find(r => lower(r.label).includes('total host reads') || lower(r.label).includes('total read'));
+        const failure = rs.find(r => lower(r.label).includes('failure') || lower(r.label).includes('warning'));
+        return `<div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div class="hero-value" style="font-size:14px">${sensor}</div>${pill('healthy','ok')}</div>
+          <div class="rows">
+            ${rowHtml('Temperature', temp, `${fmt(temp?.avg)}°C avg · ${fmt(temp?.max)}°C peak`, statusClass(temp?.max, 45, 55), temp?.max >=45 ? 'warm' : 'ok')}
+            ${rowHtml('Remaining life', life, `${fmt(life?.value,0)}%`, 'ok', 'life')}
+            ${rowHtml('Available spare', spare, `${fmt(spare?.value,0)}%`, 'ok', 'spare')}
+            ${rowHtml('Total written', written, `${fmt(written?.value,0)} ${written?.unit || ''}`, 'info', 'written')}
+            ${rowHtml('Total read', read, `${fmt(read?.value,0)} ${read?.unit || ''}`, 'info', 'read')}
+            ${rowHtml('Failure / Warning', failure, failure ? `${fmtInt(failure.value)}` : 'None', failure?.value ? 'bad' : 'ok', failure?.value ? 'warn' : 'none')}
+          </div>
+        </div>`;
+      }).join('');
+      if (!drives.length) $('storageCards').innerHTML = '<div class="card">No storage SMART / NVMe sensors found yet.</div>';
+    }
+
+    function renderHealth(readings) {
+      const items = [];
+      const cpuPkg = pick(readings, ['cpu package']);
+      const gpuTemp = pick(readings, ['gpu temperature']) || pick(readings, ['gpu core temperature']);
+      const memLoad = pick(readings, ['physical memory load']);
+      const nvmeTemps = readings.filter(r => (lower(r.sensor).includes('drive') || lower(r.sensor).includes('nvme')) && lower(r.label).includes('temperature'));
+
+      items.push({cls:'green', text:`CPU package is ${fmt(cpuPkg?.avg)}°C avg, peak ${fmt(cpuPkg?.max)}°C. ${cpuPkg?.max < 85 ? 'Thermals look healthy.' : 'Keep an eye on load spikes.'}`});
+      items.push({cls:'green', text:`GPU is ${fmt(gpuTemp?.avg)}°C avg with ${fmt(gpuTemp?.max)}°C peak. ${gpuTemp?.avg < 70 ? 'GPU is running cool.' : 'GPU is getting warm under load.'}`});
+      items.push({cls: (memLoad?.value || memLoad?.avg) > 80 ? 'amber' : 'green', text:`Memory load is ${fmt(memLoad?.value || memLoad?.avg)}%. ${(memLoad?.value || memLoad?.avg) > 80 ? 'High RAM pressure detected.' : 'Memory headroom looks fine.'}`});
+      if (nvmeTemps.length) {
+        const hottest = Math.max(...nvmeTemps.map(r => r.max || r.value || 0));
+        items.push({cls: hottest >= 50 ? 'amber' : 'blue', text:`NVMe temperatures peak at ${fmt(hottest)}°C. ${hottest >= 50 ? 'A little warm, worth watching under sustained load.' : 'Storage temperatures are in a safe range.'}`});
+      }
+      $('healthList').innerHTML = items.map(i => `<div class="health-item ${i.cls}">${i.text}</div>`).join('');
+      $('healthPill').textContent = items.some(i => i.cls === 'bad') ? 'Critical faults detected' : 'No critical faults';
+      $('healthPill').style.background = items.some(i => i.cls === 'bad') ? 'var(--red-bg)' : 'var(--green-bg)';
+      $('healthPill').style.color = items.some(i => i.cls === 'bad') ? '#ff9898' : '#8fe58f';
+    }
+
+    function render(readings, meta) {
+      latest = readings;
+      latestMeta = meta || {};
+      $('sampleMeta').textContent = `${new Date().toLocaleString()} · ${readings.length} readings · polling ${meta?.polling_period || '--'} ms`;
+      renderHero(readings);
+      renderCpuBars(readings);
+      renderCpuPanels(readings);
+      renderGpu(readings);
+      renderMemory(readings);
+      renderStorage(readings);
+      renderHealth(readings);
+    }
+
+    function connect() {
+      if (socket) socket.close();
+      socket = new WebSocket(`ws://${location.host}/ws`);
+      socket.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        if (data.readings) render(data.readings, data.meta || {});
+      };
+      socket.onopen = () => { $('healthPill').textContent = 'Live'; };
+      socket.onclose = () => { $('healthPill').textContent = 'Reconnecting...'; setTimeout(connect, 1500); };
+    }
+
+    $('refreshBtn').addEventListener('click', async () => {
+      const res = await fetch('/api/readings');
+      const data = await res.json();
+      if (data.readings) render(data.readings, data.meta || {});
+    });
+
+    $('searchInput').addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      if (!q) return render(latest, latestMeta);
+      const filtered = latest.filter(r => `${r.sensor} ${r.label}`.toLowerCase().includes(q));
+      render(filtered, latestMeta);
+    });
+
+    connect();
+  </script>
+</body>
+</html>
