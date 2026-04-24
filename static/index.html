@@ -3,360 +3,337 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>System Diagnostic</title>
+  <title>HWiNFO HUD</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0a0a0a;
-      --panel: #232321;
-      --panel-2: #2a2a28;
-      --line: #3a3a36;
-      --text: #f2f2ea;
-      --muted: #b8b7ae;
-      --green: #2f8f2f;
-      --green-bg: #183d14;
-      --amber: #a67c18;
-      --amber-bg: #4b3a11;
-      --blue: #3f8de0;
-      --blue-bg: #173961;
-      --red: #cf4d4d;
-      --red-bg: #4b1818;
-      --cpu: #4b95e8;
-      --ecore: #8d8d87;
-      --gpu: #4fc4b6;
-      --shadow: 0 1px 0 rgba(255,255,255,.04) inset;
-      --radius: 10px;
+      --deep-space: #050510;
+      --panel-bg: rgba(10, 12, 30, 0.84);
+      --cyan: #00D9FF;
+      --cyan-soft: rgba(0, 217, 255, 0.14);
+      --green: #00FF88;
+      --amber: #FFC857;
+      --red: #FF5D73;
+      --text: #E7F7FF;
+      --muted: #7E9BB0;
+      --line: rgba(255,255,255,0.08);
     }
 
     * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
     body {
-      margin: 0;
-      background: var(--bg);
+      background:
+        radial-gradient(circle at 50% 20%, rgba(0, 217, 255, 0.10), transparent 35%),
+        radial-gradient(circle at 80% 0%, rgba(0, 255, 136, 0.06), transparent 25%),
+        linear-gradient(180deg, #050510 0%, #060814 100%);
       color: var(--text);
-      font-family: Inter, Segoe UI, Arial, sans-serif;
+      font-family: 'Space Grotesk', sans-serif;
+      overflow-x: hidden;
     }
-    .wrap {
-      width: 760px;
-      margin: 10px auto 40px;
-    }
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .title {
-      display: flex;
-      gap: 12px;
-      align-items: baseline;
-      flex-wrap: wrap;
-    }
-    .title h1 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: .2px;
-    }
-    .subtitle {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-    }
-    .controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    .btn, .search {
-      background: #161616;
-      color: var(--text);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 8px 10px;
-      font-size: 12px;
-    }
-    .btn { cursor: pointer; }
-    .pill {
-      background: var(--green-bg);
-      color: #8fe58f;
-      border: 1px solid #245d24;
-      border-radius: 7px;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 7px 12px;
-      white-space: nowrap;
-    }
-    .grid-3, .grid-4, .grid-2 {
-      display: grid;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    .grid-3 { grid-template-columns: repeat(3, 1fr); }
-    .grid-4 { grid-template-columns: repeat(4, 1fr); }
-    .grid-2 { grid-template-columns: repeat(2, 1fr); }
-    .card {
-      background: var(--panel);
-      border: 1px solid #2f2f2b;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 14px 16px;
-    }
-    .section-title {
-      margin: 18px 0 10px;
-      font-size: 13px;
-      font-weight: 900;
-      letter-spacing: .4px;
-      text-transform: uppercase;
-    }
-    .eyebrow {
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .4px;
-      margin-bottom: 6px;
-    }
-    .hero-value {
-      font-size: 16px;
-      font-weight: 800;
-      line-height: 1.25;
-    }
-    .hero-sub {
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 2px;
-    }
-    .metric-big {
-      font-size: 17px;
-      font-weight: 900;
-      margin-top: 4px;
-    }
-    .metric-big span {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--muted);
-    }
-    .note {
-      margin-top: 6px;
-      font-size: 12px;
-      color: #89d589;
-    }
-    .muted-note { color: var(--muted); }
-    .status-tag {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 3px 8px;
-      border-radius: 6px;
-      margin-left: 8px;
-      vertical-align: middle;
-    }
-    .ok { background: var(--green-bg); color: #8fe58f; }
-    .warm { background: var(--amber-bg); color: #e8c15a; }
-    .info { background: var(--blue-bg); color: #8fc1ff; }
-    .bad { background: var(--red-bg); color: #ff9898; }
 
-    .rows { display: flex; flex-direction: column; gap: 9px; }
-    .row {
-      display: grid;
-      grid-template-columns: 1.4fr 1fr;
-      gap: 10px;
-      align-items: center;
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .row strong {
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 800;
-    }
-    .divider { height: 1px; background: var(--line); margin: 4px 0; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
 
-    .bar-panel {
-      background: var(--panel);
-      border: 1px solid #2f2f2b;
-      border-radius: var(--radius);
-      padding: 14px 16px 10px;
-      margin-bottom: 12px;
-    }
-    .chart-wrap {
-      height: 220px;
-      border-top: 2px solid #d7d7d0;
-      border-bottom: 2px solid #d7d7d0;
-      position: relative;
-      margin-top: 12px;
-      padding-top: 10px;
-    }
-    .grid-lines {
-      position: absolute;
+    .scanline {
+      position: fixed;
       inset: 0;
       pointer-events: none;
+      z-index: 50;
+      overflow: hidden;
     }
-    .grid-lines .line {
+    .scanline::before {
+      content: "";
       position: absolute;
-      left: 0;
-      right: 0;
-      border-top: 2px solid rgba(220,220,210,.9);
+      left: 0; right: 0;
+      top: -10px;
+      height: 2px;
+      background: rgba(0, 217, 255, 0.10);
+      box-shadow: 0 0 12px rgba(0,217,255,0.25);
+      animation: scan 9s linear infinite;
     }
-    .line.l1 { top: 20%; }
-    .line.l2 { top: 40%; }
-    .line.l3 { top: 60%; }
-    .line.l4 { top: 80%; }
-    .bars {
-      height: 100%;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 10px;
+    @keyframes scan {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(100vh); }
+    }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+    ::-webkit-scrollbar-thumb { background: rgba(0,217,255,0.35); border-radius: 999px; }
+
+    .glass {
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 217, 255, 0.12);
+      box-shadow:
+        0 12px 32px rgba(0,0,0,0.45),
+        inset 0 0 0 1px rgba(255,255,255,0.015),
+        inset 0 0 24px rgba(0, 217, 255, 0.02);
       position: relative;
-      z-index: 1;
-      padding: 0 4px;
     }
-    .bar-col {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      align-items: center;
-      height: 100%;
-      min-width: 0;
+
+    .bracket {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-color: rgba(0, 217, 255, 0.55);
+      pointer-events: none;
     }
-    .bar {
-      width: 20px;
-      background: var(--cpu);
-      border-radius: 2px 2px 0 0;
-      min-height: 2px;
-    }
-    .bar.ecore { background: var(--ecore); }
-    .bar.warn { background: #d9cf6b; }
-    .bar-label {
-      margin-top: 8px;
-      font-size: 11px;
+    .tl { top: -1px; left: -1px; border-top: 2px solid; border-left: 2px solid; }
+    .tr { top: -1px; right: -1px; border-top: 2px solid; border-right: 2px solid; }
+    .bl { bottom: -1px; left: -1px; border-bottom: 2px solid; border-left: 2px solid; }
+    .br { bottom: -1px; right: -1px; border-bottom: 2px solid; border-right: 2px solid; }
+
+    .eyebrow {
       color: var(--muted);
-      font-weight: 800;
-    }
-    .legend {
-      display: flex;
-      gap: 18px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
       font-weight: 700;
     }
-    .dot {
+    .section-title {
+      color: #96B7C9;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-weight: 700;
+      margin: 20px 0 10px;
+    }
+    .metric-big {
+      font-size: 18px;
+      line-height: 1.15;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .metric-big span {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border: 1px solid transparent;
+    }
+    .pill.ok { color: #8EFBBC; background: rgba(0,255,136,0.08); border-color: rgba(0,255,136,0.18); }
+    .pill.info { color: #7DE6FF; background: rgba(0,217,255,0.08); border-color: rgba(0,217,255,0.18); }
+    .pill.warm { color: #FFD37D; background: rgba(255,200,87,0.08); border-color: rgba(255,200,87,0.18); }
+    .pill.bad { color: #FF97A6; background: rgba(255,93,115,0.08); border-color: rgba(255,93,115,0.18); }
+
+    .tiny-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .tiny-value { color: var(--text); font-size: 12px; font-weight: 600; }
+
+    .kv-row {
+      display: grid;
+      grid-template-columns: 1.1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .kv-row:last-child { border-bottom: 0; }
+
+    .mini-progress {
+      height: 6px;
+      width: 100%;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.05);
+    }
+    .mini-progress > span {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+
+    .core-chart-wrap {
+      border-top: 1px solid rgba(0,217,255,0.18);
+      border-bottom: 1px solid rgba(0,217,255,0.18);
+      background: linear-gradient(180deg, rgba(255,255,255,0.015), transparent);
+      padding: 14px;
+      overflow: hidden;
+    }
+    .cpu-graph-panel {
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+      padding: 10px;
+    }
+    .cpu-graph-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .cpu-graph-title {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .cpu-graph-note {
+      font-size: 10px;
+      color: #7DE6FF;
+    }
+    .cpu-graph-svg {
+      width: 100%;
+      height: 220px;
+      display: block;
+      overflow: visible;
+    }
+    .trace-legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .trace-dot {
       display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 2px;
-      margin-right: 7px;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      margin-right: 6px;
       vertical-align: -1px;
     }
 
-    .progress {
-      background: #1a1a19;
-      border-radius: 999px;
-      overflow: hidden;
-      height: 8px;
-      margin-top: 5px;
-    }
-    .progress > span {
-      display: block;
-      height: 100%;
-      background: var(--gpu);
-      border-radius: 999px;
+    .gpu-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 12px;
     }
 
-    .health-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
     .health-item {
-      border-radius: 8px;
+      border-radius: 12px;
       padding: 14px 16px;
       font-size: 12px;
-      line-height: 1.5;
-      border: 1px solid rgba(255,255,255,.06);
+      line-height: 1.55;
+      border: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 10px;
     }
-    .health-item.green { background: #194915; color: #99e48e; }
-    .health-item.amber { background: #574412; color: #e7c164; }
-    .health-item.blue { background: #23446c; color: #9cc3ff; }
-    .hidden { display: none !important; }
+    .health-item.green { background: rgba(0,255,136,0.06); border-color: rgba(0,255,136,0.14); color: #88F8B6; }
+    .health-item.amber { background: rgba(255,200,87,0.06); border-color: rgba(255,200,87,0.14); color: #FFD37D; }
+    .health-item.blue { background: rgba(0,217,255,0.06); border-color: rgba(0,217,255,0.14); color: #85E8FF; }
+
+    @media (max-width: 900px) {
+      .gpu-stat-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .main-grid-3, .main-grid-4, .main-grid-2 { grid-template-columns: 1fr !important; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="title">
-        <h1>System diagnostic</h1>
-        <div class="subtitle" id="sampleMeta">Live HWiNFO stream</div>
-      </div>
-      <div class="controls">
-        <input id="searchInput" class="search" placeholder="Search sensors" />
-        <button id="refreshBtn" class="btn">Refresh</button>
-        <div class="pill" id="healthPill">Connecting...</div>
-      </div>
-    </div>
+  <div class="scanline"></div>
 
-    <div class="grid-3">
-      <div class="card"><div class="eyebrow">CPU</div><div class="hero-value" id="cpuHero">Loading...</div><div class="hero-sub" id="cpuSub"></div></div>
-      <div class="card"><div class="eyebrow">RAM</div><div class="hero-value" id="ramHero">Loading...</div><div class="hero-sub" id="ramSub"></div></div>
-      <div class="card"><div class="eyebrow">GPU</div><div class="hero-value" id="gpuHero">Loading...</div><div class="hero-sub" id="gpuSub"></div></div>
-    </div>
-
-    <div class="section-title">CPU — Temperatures</div>
-    <div class="bar-panel">
-      <div class="chart-wrap">
-        <div class="grid-lines">
-          <div class="line l1"></div>
-          <div class="line l2"></div>
-          <div class="line l3"></div>
-          <div class="line l4"></div>
+  <div style="max-width: 1240px; margin: 0 auto; padding: 16px 16px 40px;">
+    <header class="flex items-center justify-between gap-4 mb-4">
+      <div class="flex items-center gap-3">
+        <iconify-icon icon="lucide:activity" class="text-2xl" style="color:var(--cyan)"></iconify-icon>
+        <div>
+          <div class="text-xl font-bold tracking-tight">HWiNFO <span style="color:var(--cyan)">HUD</span></div>
+          <div id="sampleMeta" class="mono text-[10px]" style="color:var(--muted); text-transform: uppercase; letter-spacing: 0.14em;">Live sensor stream</div>
         </div>
-        <div class="bars" id="cpuBars"></div>
       </div>
-      <div class="legend">
-        <div><span class="dot" style="background: var(--cpu)"></span>P-cores (perf)</div>
-        <div><span class="dot" style="background: var(--ecore)"></span>E-cores (efficiency)</div>
-        <div><span class="dot" style="background: #d9cf6b"></span>TJMAX / high-temp core</div>
-      </div>
-    </div>
 
-    <div class="grid-2">
-      <div class="card">
+      <div class="flex items-center gap-3">
+        <input id="searchInput" class="mono text-[11px] bg-black/30 border border-white/10 rounded px-3 py-2 outline-none" style="color:var(--text); width:220px" placeholder="Search sensors" />
+        <button id="refreshBtn" class="mono text-[10px] uppercase tracking-widest px-3 py-2 rounded border border-white/10 bg-white/5 hover:bg-white/10">Refresh</button>
+        <div id="healthPill" class="pill info">Connecting...</div>
+      </div>
+    </header>
+
+    <section class="main-grid-3 grid grid-cols-3 gap-4 mb-4">
+      <div class="glass rounded-xl p-4">
+        <div class="bracket tl"></div><div class="bracket tr"></div>
+        <div class="eyebrow">CPU</div>
+        <div class="metric-big" id="cpuHero">Loading...</div>
+        <div class="mono text-[10px] mt-1" style="color:var(--muted)" id="cpuSub"></div>
+      </div>
+      <div class="glass rounded-xl p-4">
+        <div class="bracket tl"></div><div class="bracket tr"></div>
+        <div class="eyebrow">RAM</div>
+        <div class="metric-big" id="ramHero">Loading...</div>
+        <div class="mono text-[10px] mt-1" style="color:var(--muted)" id="ramSub"></div>
+      </div>
+      <div class="glass rounded-xl p-4">
+        <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket br"></div><div class="bracket bl"></div>
+        <div class="eyebrow">GPU</div>
+        <div class="metric-big" id="gpuHero">Loading...</div>
+        <div class="mono text-[10px] mt-1" style="color:var(--muted)" id="gpuSub"></div>
+      </div>
+    </section>
+
+    <div class="section-title">CPU — Temperature cores</div>
+    <section class="glass rounded-xl p-4 mb-4">
+      <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <div class="tiny-label">Thermal trend graph</div>
+            <div class="mono text-[11px]" style="color:var(--muted)">Only CPU temp, GPU temp, and Lenovo PCH temp.</div>
+          </div>
+        </div>
+        <div id="cpuBarsWrap" class="core-chart-wrap rounded-lg"></div>
+      </div>
+    </section>
+
+    <section class="main-grid-2 grid grid-cols-2 gap-4 mb-4">
+      <div class="glass rounded-xl p-4">
+        <div class="bracket tl"></div><div class="bracket bl"></div>
         <div class="section-title" style="margin-top:0">CPU package</div>
-        <div class="rows" id="cpuPackageRows"></div>
+        <div id="cpuPackageRows"></div>
       </div>
-      <div class="card">
+      <div class="glass rounded-xl p-4">
+        <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket br"></div>
         <div class="section-title" style="margin-top:0">CPU utilization</div>
-        <div class="rows" id="cpuUtilRows"></div>
+        <div id="cpuUtilRows"></div>
       </div>
-    </div>
+    </section>
 
-    <div class="section-title">GPU</div>
-    <div class="grid-4" id="gpuStats"></div>
-    <div class="card" id="gpuDetailCard" style="margin-bottom:12px"></div>
+    <div class="section-title">GPU — Detailed hub</div>
+    <section class="glass rounded-xl p-4 mb-4">
+      <div class="bracket tl"></div><div class="bracket tr"></div><div class="bracket bl"></div><div class="bracket br"></div>
+      <div class="gpu-stat-grid mb-4" id="gpuStats"></div>
+      <div class="grid grid-cols-[1.2fr_1fr] gap-4 main-grid-2">
+        <div class="glass rounded-lg p-4" id="gpuDetailCard"></div>
+        <div class="glass rounded-lg p-4" id="gpuMemoryCard"></div>
+      </div>
+    </section>
 
-    <div class="section-title">Memory (DDR5)</div>
-    <div class="grid-4" id="memoryStats"></div>
+    <div class="section-title">Memory</div>
+    <section class="gpu-stat-grid mb-4" id="memoryStats"></section>
 
     <div class="section-title">Storage</div>
-    <div class="grid-2" id="storageCards"></div>
+    <section class="main-grid-2 grid grid-cols-2 gap-4 mb-4" id="storageCards"></section>
 
-    <div class="section-title">Health summary & recommendations</div>
-    <div class="health-list" id="healthList"></div>
+    <div class="section-title">Health summary</div>
+    <section id="healthList"></section>
   </div>
 
   <script>
     let socket;
     let latest = [];
     let latestMeta = {};
+    const cpuHistory = new Map();
+    const CPU_HISTORY_LIMIT = 60;
 
     const $ = (id) => document.getElementById(id);
-    const fmt = (n, d=1) => Number.isFinite(n) ? Number(n).toFixed(d) : '--';
-    const fmtInt = (n) => Number.isFinite(n) ? Math.round(n) : '--';
     const lower = (s) => String(s || '').toLowerCase();
+    const fmt = (n, d = 1) => Number.isFinite(n) ? Number(n).toFixed(d) : '--';
+    const fmtInt = (n) => Number.isFinite(n) ? Math.round(n) : '--';
 
     function pick(readings, includes = [], excludes = []) {
       return readings.find(r => {
@@ -364,140 +341,316 @@
         return includes.every(i => hay.includes(i)) && excludes.every(e => !hay.includes(e));
       });
     }
+
     function pickAll(readings, includes = [], excludes = []) {
       return readings.filter(r => {
         const hay = `${r.sensor} ${r.label}`.toLowerCase();
         return includes.every(i => hay.includes(i)) && excludes.every(e => !hay.includes(e));
       });
     }
+
+    function isMeaningfulNumber(v) {
+      return Number.isFinite(v) && v !== 0;
+    }
+
+    function compactMetric(value, unit = '', decimals = 1) {
+      return Number.isFinite(value) ? `${Number(value).toFixed(decimals)}${unit}` : '--';
+    }
+
     function statusClass(v, warm, bad) {
       if (!Number.isFinite(v)) return 'info';
       if (v >= bad) return 'bad';
       if (v >= warm) return 'warm';
       return 'ok';
     }
-    function pill(text, cls) { return `<span class="status-tag ${cls}">${text}</span>`; }
+
+    function pill(text, cls) {
+      return `<span class="pill ${cls}">${text}</span>`;
+    }
+
+    function kvRow(label, valueHtml, tagHtml = '') {
+      return `<div class="kv-row"><div class="tiny-value" style="font-size:12px; font-weight:500; color:var(--muted)">${label}</div><div class="flex items-center gap-2">${valueHtml}${tagHtml}</div></div>`;
+    }
+
+    function statCard(title, big, sub, foot = '') {
+      return `<div class="glass rounded-lg p-4">
+        <div class="bracket tl"></div><div class="bracket br"></div>
+        <div class="eyebrow">${title}</div>
+        <div class="metric-big">${big}</div>
+        <div class="mono text-[10px] mt-1" style="color:var(--muted)">${sub || ''}</div>
+        ${foot ? `<div class="mono text-[10px] mt-2" style="color:#7DE6FF">${foot}</div>` : ''}
+      </div>`;
+    }
+
+    function sanitizeStorageName(sensor) {
+      return sensor
+        .replace(/^S\.M\.A\.R\.T\.:\s*/i, '')
+        .replace(/^Drive:\s*/i, '')
+        .trim();
+    }
+
+    function dedupeDriveSensors(readings) {
+      const candidates = readings.filter(r => {
+        const s = lower(r.sensor);
+        return s.includes('s.m.a.r.t') || s.includes('drive:') || s.includes('drive ');
+      });
+      const groups = new Map();
+      for (const r of candidates) {
+        const key = sanitizeStorageName(r.sensor).toLowerCase();
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(r);
+      }
+
+      const deduped = [];
+      for (const [key, items] of groups.entries()) {
+        const driveReadings = items.filter(r => lower(r.sensor).startsWith('drive:'));
+        const smartReadings = items.filter(r => lower(r.sensor).startsWith('s.m.a.r.t.:'));
+        const chosen = driveReadings.length ? driveReadings.concat(smartReadings) : items;
+        deduped.push({ key, name: sanitizeStorageName(chosen[0].sensor), readings: chosen });
+      }
+      return deduped;
+    }
+
+    function tempColor(temp, isECore = false) {
+      if (!Number.isFinite(temp)) return isECore ? '#7b869a' : '#4fc3ff';
+      if (temp >= 90) return '#FF5D73';
+      if (temp >= 80) return '#FF8A5B';
+      if (temp >= 70) return '#FFC857';
+      if (temp >= 60) return isECore ? '#93A0B3' : '#54D3FF';
+      return isECore ? '#7b869a' : '#4fc3ff';
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function updateCpuHistory(series) {
+      const seen = new Set();
+      series.forEach(item => {
+        const key = item.key;
+        seen.add(key);
+        if (!cpuHistory.has(key)) cpuHistory.set(key, []);
+        const arr = cpuHistory.get(key);
+        arr.push(Number(item.value));
+        if (arr.length > CPU_HISTORY_LIMIT) arr.shift();
+      });
+      for (const key of [...cpuHistory.keys()]) {
+        if (!seen.has(key)) cpuHistory.delete(key);
+      }
+    }
+
+    function buildLinePath(points, width, height, minY, maxY) {
+      if (!points.length) return '';
+      const range = Math.max(1, maxY - minY);
+      return points.map((value, i) => {
+        const x = points.length === 1 ? 0 : (i / (points.length - 1)) * width;
+        const y = height - ((value - minY) / range) * height;
+        return `${i === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
+      }).join(' ');
+    }
+
+    function renderTempTrendPanel(series, minY, maxY) {
+      const width = 900;
+      const height = 220;
+      const gridVals = [40, 50, 60, 70, 80, 90, 100];
+      const grid = gridVals.map(v => {
+        const y = height - ((v - minY) / Math.max(1, maxY - minY)) * height;
+        return `<line x1="0" y1="${y.toFixed(2)}" x2="${width}" y2="${y.toFixed(2)}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="4 4" />
+                <text x="4" y="${(y - 4).toFixed(2)}" fill="#7E9BB0" font-size="9" font-family="JetBrains Mono">${v}°</text>`;
+      }).join('');
+
+      const lines = series.map(item => {
+        const history = cpuHistory.get(item.key) || [Number(item.value)];
+        const path = buildLinePath(history, width, height, minY, maxY);
+        const lastX = history.length === 1 ? 0 : width;
+        const lastY = height - ((item.value - minY) / Math.max(1, maxY - minY)) * height;
+        return `
+          <path d="${path}" fill="none" stroke="${item.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.95" />
+          <circle cx="${lastX.toFixed(2)}" cy="${lastY.toFixed(2)}" r="3.2" fill="${item.color}" />
+        `;
+      }).join('');
+
+      const legend = series.map(item => `<div><span class="trace-dot" style="background:${item.color}; box-shadow:0 0 8px ${item.color}"></span>${escapeHtml(item.label)} <span class="mono" style="color:var(--text)">${fmt(item.value)}°</span></div>`).join('');
+
+      return `
+        <div class="cpu-graph-panel">
+          <div class="cpu-graph-head">
+            <div class="cpu-graph-title mono">Live thermal graph</div>
+            <div class="cpu-graph-note mono">Last ${CPU_HISTORY_LIMIT}s</div>
+          </div>
+          <svg class="cpu-graph-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+            ${grid}
+            ${lines}
+          </svg>
+          <div class="trace-legend">${legend}</div>
+        </div>
+      `;
+    }
 
     function renderHero(readings) {
       const cpu = pick(readings, ['cpu [#0]']) || pick(readings, ['cpu']);
       const gpu = pick(readings, ['gpu [#0]']) || pick(readings, ['gpu']);
-      const memTotal = pick(readings, ['physical memory available']) && pick(readings, ['physical memory used'])
-        ? pick(readings, ['physical memory available']).value + pick(readings, ['physical memory used']).value
-        : null;
+      const memAvail = pick(readings, ['physical memory available']);
+      const memUsed = pick(readings, ['physical memory used']);
+      const memTotal = memAvail && memUsed ? memAvail.value + memUsed.value : null;
+      const gpuTemp = pick(readings, ['gpu temperature']);
 
-      $('cpuHero').textContent = cpu ? cpu.sensor.replace(/^CPU \[#0\]:\s*/,'') : 'CPU not found';
-      $('cpuSub').textContent = 'Live telemetry from HWiNFO';
+      $('cpuHero').textContent = cpu ? cpu.sensor.replace(/^CPU \[#0\]:\s*/, '') : 'CPU not found';
+      $('cpuSub').textContent = 'Live HWiNFO telemetry';
 
-      $('ramHero').innerHTML = memTotal ? `${fmt(memTotal,0)} <span style="font-size:13px;color:#b8b7ae;font-weight:700">GB</span>` : 'RAM not found';
-      $('ramSub').textContent = 'System memory';
+      $('ramHero').innerHTML = memTotal ? `${fmt(memTotal, 0)} <span>GB total</span>` : 'RAM not found';
+      $('ramSub').textContent = memUsed ? `${fmt(memUsed.value, 1)}GB used` : 'System memory';
 
-      const gpuSensor = pick(readings, ['gpu'])?.sensor || 'GPU not found';
-      const gpuTemp = pick(readings, ['gpu temperature']) || pick(readings, ['core temperature'], ['cpu']);
-      $('gpuHero').textContent = gpuSensor.replace(/^GPU \[#\d+\]:\s*/, '');
-      $('gpuSub').textContent = gpuTemp ? `${fmt(gpuTemp.value,1)}°C current` : 'Live telemetry';
+      $('gpuHero').textContent = gpu ? gpu.sensor.replace(/^d?GPU \[#\d+\]:\s*/i, '') : 'GPU not found';
+      $('gpuSub').textContent = gpuTemp ? `${fmt(gpuTemp.value, 1)}°C current` : 'Live telemetry';
     }
 
     function renderCpuBars(readings) {
-      const bars = $('cpuBars');
-      // Match "P-core N: XX.X C" and "E-core N: XX.X C" format from HWiNFO DTS section
-      const coreTemps = readings.filter(r => {
-        const l = lower(r.label);
-        return (l.startsWith('p-core ') || l.startsWith('e-core ')) && l.includes(':');
-      });
-      // Also grab Distance to TjMAX
-      const tjmax = readings.filter(r => lower(r.label).includes('distance to tjmax'));
-      coreTemps.sort((a,b) => a.label.localeCompare(b.label, undefined, {numeric:true}));
-      bars.innerHTML = '';
-      coreTemps.forEach(r => {
-        const l = lower(r.label);
-        const isE = l.startsWith('e-core');
-        // extract numeric temp from "P-core N: 52.0 C" -> 52
-        const temp = parseFloat(r.label.split(':')[1].trim());
-        const h = Math.max(4, Math.min(100, temp));
-        const shortLabel = r.label.replace(/:\s*[\d.]+\s*C$/, '').replace('P-core ', 'P').replace('E-core ', 'E');
-        // check tjmax distance for this core
-        const tj = tjmax.find(t => t.label.includes(shortLabel.replace('P','P-core').replace('E','E-core')));
-        const div = document.createElement('div');
-        div.className = 'bar-col';
-        div.innerHTML = `<div class="bar ${isE ? 'ecore' : ''}" style="height:${h}%"></div><div class="bar-label">${shortLabel}</div>`;
-        bars.appendChild(div);
-      });
-      if (!coreTemps.length) bars.innerHTML = '<div style="color:#b8b7ae;font-size:12px">No per-core temperature sensors found.</div>';
+      const cpuTemp = pick(readings, ['cpu package']) || pick(readings, ['core max']);
+      const gpuTemp = pick(readings, ['gpu temperature']);
+      const pchTemp = pick(readings, ['pch temperature']);
+
+      const series = [
+        cpuTemp ? { key: 'cpu-package', label: 'CPU Temp', value: Number(cpuTemp.value ?? cpuTemp.avg), color: '#00D9FF' } : null,
+        gpuTemp ? { key: 'gpu-temp', label: 'GPU Temp', value: Number(gpuTemp.value ?? gpuTemp.avg), color: '#00FF88' } : null,
+        pchTemp ? { key: 'pch-temp', label: 'Lenovo PCH Temp', value: Number(pchTemp.value ?? pchTemp.avg), color: '#FFC857' } : null,
+      ].filter(Boolean);
+
+      updateCpuHistory(series);
+      $('cpuBarsWrap').innerHTML = renderTempTrendPanel(series, 30, 100);
     }
 
     function renderCpuPanels(readings) {
       const pkgTemp = pick(readings, ['cpu package']);
       const coreMax = pick(readings, ['core max']);
       const pkgPower = pick(readings, ['package power']);
+      const iaPower = pick(readings, ['ia cores power']);
+      const saPower = pick(readings, ['system agent power']);
+      const rocPower = pick(readings, ['rest-of-chip power']);
       const pl1 = pick(readings, ['pl1 power limit']);
       const pl2 = pick(readings, ['pl2 power limit']);
-      const throttle = pick(readings, ['thermal throttling']);
       const totalUsage = pick(readings, ['total cpu usage']);
       const avgClock = pick(readings, ['average effective clock']) || pick(readings, ['core effective clocks']);
       const pcoreMax = pick(readings, ['p-core 0 clock']) || pick(readings, ['core clocks']);
-      const vrTemp = pick(readings, ['vr vcc temperature']) || pick(readings, ['vr temperature']);
+      const vrTemp = pick(readings, ['vr vcc temperature']);
       const pchTemp = pick(readings, ['pch temperature']);
+      const throttle = pick(readings, ['thermal throttling']);
 
       $('cpuPackageRows').innerHTML = [
-        rowHtml('Package temp', pkgTemp, `avg ${fmt(pkgTemp?.avg)}°C · peak ${fmt(pkgTemp?.max)}°C`, statusClass(pkgTemp?.max, 75, 90), pkgTemp?.max >= 90 ? 'hot' : 'ok'),
-        rowHtml('Core max', coreMax, `avg ${fmt(coreMax?.avg)}°C · peak ${fmt(coreMax?.max)}°C`, statusClass(coreMax?.max, 75, 90), coreMax?.max >= 90 ? 'hot' : 'ok'),
-        rowHtml('Package power', pkgPower, `avg ${fmt(pkgPower?.avg)}W · peak ${fmt(pkgPower?.max)}W`, 'info', 'live'),
-        `<div class="divider"></div>`,
-        rowHtml('PL1 / PL2 limits', null, `${fmtInt(pl1?.value)}W / ${fmtInt(pl2?.value)}W`, 'info', 'set'),
-        rowHtml('Thermal throttling', throttle, `${fmtInt(throttle?.value || 0)} events`, throttle?.value > 0 ? 'bad' : 'ok', throttle?.value > 0 ? 'throttling' : 'none'),
-      ].join('');
+        kvRow('Package temp', `<span class="tiny-value mono">avg ${fmt(pkgTemp?.avg)}°C · peak ${fmt(pkgTemp?.max)}°C</span>`, pill(pkgTemp?.max >= 90 ? 'hot' : pkgTemp?.max >= 75 ? 'warm' : 'ok', statusClass(pkgTemp?.max, 75, 90))),
+        kvRow('Core max', `<span class="tiny-value mono">avg ${fmt(coreMax?.avg)}°C · peak ${fmt(coreMax?.max)}°C</span>`, pill(coreMax?.max >= 90 ? 'hot' : coreMax?.max >= 75 ? 'warm' : 'ok', statusClass(coreMax?.max, 75, 90))),
+        kvRow('Package power', `<span class="tiny-value mono">avg ${fmt(pkgPower?.avg)}W · peak ${fmt(pkgPower?.max)}W</span>`, pill('live', 'info')),
+        iaPower ? kvRow('IA cores power', `<span class="tiny-value mono">${fmt(iaPower.value)}W current</span>`, pill('compute', 'info')) : '',
+        saPower ? kvRow('System agent', `<span class="tiny-value mono">${fmt(saPower.value)}W current</span>`, pill('fabric', 'info')) : '',
+        rocPower && isMeaningfulNumber(rocPower.value) ? kvRow('Rest-of-chip', `<span class="tiny-value mono">${fmt(rocPower.value)}W current</span>`, pill('misc', 'info')) : '',
+        kvRow('PL1 / PL2 limits', `<span class="tiny-value mono">${fmtInt(pl1?.value)}W / ${fmtInt(pl2?.value)}W</span>`, pill('limit', 'info')),
+        throttle ? kvRow('Thermal throttling', `<span class="tiny-value mono">${fmtInt(throttle.value)} event${throttle.value === 1 ? '' : 's'}</span>`, throttle.value > 0 ? pill('active', 'bad') : pill('clear', 'ok')) : ''
+      ].filter(Boolean).join('');
 
       $('cpuUtilRows').innerHTML = [
-        rowHtml('Total CPU usage', totalUsage, `avg ${fmt(totalUsage?.avg)}% · peak ${fmt(totalUsage?.max)}%`, 'info', 'load'),
-        rowHtml('Avg core clock', avgClock, `~${fmtInt(avgClock?.avg)} MHz`, 'info', 'clock'),
-        rowHtml('P-core boost max', pcoreMax, `${fmt(pcoreMax?.max/1000,1)} GHz`, 'info', 'boost'),
-        `<div class="divider"></div>`,
-        rowHtml('VR VCC temp', vrTemp, `avg ${fmt(vrTemp?.avg)}°C · peak ${fmt(vrTemp?.max)}°C`, statusClass(vrTemp?.max, 70, 85), vrTemp?.max >= 70 ? 'warm' : 'ok'),
-        rowHtml('PCH temp', pchTemp, `avg ${fmt(pchTemp?.avg)}°C · peak ${fmt(pchTemp?.max)}°C`, statusClass(pchTemp?.max, 65, 80), pchTemp?.max >= 65 ? 'warm' : 'ok'),
-      ].join('');
-    }
-
-    function rowHtml(label, reading, right, cls='info', tag='info') {
-      return `<div class="row"><div>${label}</div><div><strong>${right || '--'}</strong>${pill(tag, cls)}</div></div>`;
-    }
-
-    function statCard(title, big, sub, note='') {
-      return `<div class="card"><div class="eyebrow">${title}</div><div class="metric-big">${big}</div><div class="hero-sub">${sub || ''}</div>${note ? `<div class="note">${note}</div>` : ''}</div>`;
+        kvRow('Total CPU usage', `<span class="tiny-value mono">avg ${fmt(totalUsage?.avg)}% · peak ${fmt(totalUsage?.max)}%</span>`, pill('load', 'info')),
+        kvRow('Avg effective clock', `<span class="tiny-value mono">~${fmtInt(avgClock?.avg)} MHz</span>`, pill('clock', 'info')),
+        kvRow('P-core boost max', `<span class="tiny-value mono">${fmt((pcoreMax?.max || 0) / 1000, 1)} GHz</span>`, pill('boost', 'info')),
+        vrTemp ? kvRow('VR VCC temp', `<span class="tiny-value mono">avg ${fmt(vrTemp?.avg)}°C · peak ${fmt(vrTemp?.max)}°C</span>`, pill(vrTemp?.max >= 85 ? 'hot' : vrTemp?.max >= 70 ? 'warm' : 'ok', statusClass(vrTemp?.max, 70, 85))) : '',
+        pchTemp ? kvRow('PCH temp', `<span class="tiny-value mono">avg ${fmt(pchTemp?.avg)}°C · peak ${fmt(pchTemp?.max)}°C</span>`, pill(pchTemp?.max >= 80 ? 'hot' : pchTemp?.max >= 65 ? 'warm' : 'ok', statusClass(pchTemp?.max, 65, 80))) : ''
+      ].filter(Boolean).join('');
     }
 
     function renderGpu(readings) {
       const coreTemp = pick(readings, ['gpu temperature']);
-      const hotSpot = pick(readings, ['hot spot temperature']);
-      const thermalLimit = pick(readings, ['thermal limit']);
-      const power = pick(readings, ['gpu power']) || pick(readings, ['board power']);
-      const load = pick(readings, ['gpu core load']) || pick(readings, ['gpu utilization']);
+      const hotSpot = pick(readings, ['gpu hot spot temperature']);
+      const thermalLimit = pick(readings, ['gpu thermal limit']);
+      const power = pick(readings, ['gpu power']);
+      const powerRated = pick(readings, ['gpu power limit', 'rated']);
+      const powerMax = pick(readings, ['gpu power limit', 'max']);
+      const coreLoad = pick(readings, ['gpu core load']);
+      const memCtrl = pick(readings, ['gpu memory controller load']);
+      const d3dUsage = pick(readings, ['gpu d3d usage']);
+      const busLoad = pick(readings, ['gpu bus load']);
+      const gpuClock = pick(readings, ['gpu clock']);
+      const memClock = pick(readings, ['gpu memory clock']);
+      const effectiveClock = pick(readings, ['gpu effective clock']);
+      const coreVoltage = pick(readings, ['gpu core voltage']);
+      const fbvddVoltage = pick(readings, ['gpu fbvdd input voltage']);
+      const fbvddPower = pick(readings, ['gpu fbvdd input power']);
+      const eightPinPower = pick(readings, ['gpu 8-pin #1 input power']);
+      const nvvddPower = pick(readings, ['gpu core (nvvdd) input power']);
+      const pcie = pick(readings, ['pcie link speed']);
+      const perfPower = pick(readings, ['performance limit - power']);
+      const perfThermal = pick(readings, ['performance limit - thermal']);
+      const perfUtil = pick(readings, ['performance limit - utilization']);
+      const recoveryCount = pick(readings, ['recovery count']);
+
+      const memoryAvailable = pick(readings, ['gpu memory available']);
+      const memoryAllocated = pick(readings, ['gpu memory allocated']);
+      const memoryUsagePct = pick(readings, ['gpu memory usage']);
+      const memDedicated = pick(readings, ['gpu d3d memory dedicated']);
+      const memDynamic = pick(readings, ['gpu d3d memory dynamic']);
+
+      const memoryJunction = hotSpot; // best available proxy on this system
+      const thermalHeadroom = coreTemp && thermalLimit ? thermalLimit.value - coreTemp.value : null;
+      const hotspotHeadroom = hotSpot && thermalLimit ? thermalLimit.value - hotSpot.value : null;
+
       $('gpuStats').innerHTML = [
-        statCard('Core temp', `${fmt(coreTemp?.avg)}<span>°C avg</span>`, coreTemp ? `peak ${fmt(coreTemp.max)}°C` : ''),
-        statCard('Hot spot', `${fmt(hotSpot?.avg)}<span>°C avg</span>`, hotSpot ? `peak ${fmt(hotSpot.max)}°C` : ''),
-        statCard('Power draw', `${fmt(power?.avg)}<span>W avg</span>`, power ? `peak ${fmt(power.max)}W · limit ${thermalLimit ? fmt(thermalLimit.value)+'W' : '--'}` : ''),
-        statCard('Core load', `${fmt(load?.avg)}<span>% avg</span>`, load ? `peak ${fmt(load.max)}%` : ''),
+        statCard('Core temp', `${fmt(coreTemp?.value ?? coreTemp?.avg)}<span>°C</span>`, coreTemp ? `avg ${fmt(coreTemp.avg)}°C · peak ${fmt(coreTemp.max)}°C` : '', thermalHeadroom != null ? `${fmt(thermalHeadroom)}° below limit` : ''),
+        statCard('Memory junction', `${fmt(memoryJunction?.value ?? memoryJunction?.avg)}<span>°C</span>`, memoryJunction ? `using hotspot telemetry` : '', hotspotHeadroom != null ? `${fmt(hotspotHeadroom)}° below limit` : ''),
+        statCard('Board power', `${fmt(power?.value ?? power?.avg)}<span>W</span>`, power ? `avg ${fmt(power.avg)}W · peak ${fmt(power.max)}W` : '', powerRated ? `rated ${fmt(powerRated.value,0)}W · max ${fmt(powerMax?.value,0)}W` : ''),
+        statCard('GPU load', `${fmt(coreLoad?.value ?? coreLoad?.avg)}<span>%</span>`, coreLoad ? `avg ${fmt(coreLoad.avg)}% · D3D ${fmt(d3dUsage?.value)}%` : '', memCtrl ? `memory controller ${fmt(memCtrl.value)}%` : '')
       ].join('');
 
-      const clock = pick(readings, ['gpu clock']) || pick(readings, ['graphics clock']);
-      const memClock = pick(readings, ['gpu memory clock']);
-      const vramAlloc = pick(readings, ['video memory available']) || pick(readings, ['dedicated memory']);
-      const vramUse = pick(readings, ['gpu memory usage']) || pick(readings, ['memory controller load']);
+      const perfBadges = [];
+      if (perfPower && isMeaningfulNumber(perfPower.value)) perfBadges.push(pill('power limited', 'warm'));
+      if (perfThermal && isMeaningfulNumber(perfThermal.value)) perfBadges.push(pill('thermal limit', 'bad'));
+      if (perfUtil && isMeaningfulNumber(perfUtil.value)) perfBadges.push(pill('util bound', 'info'));
+      if (!perfBadges.length) perfBadges.push(pill('no active perf caps', 'ok'));
+
       $('gpuDetailCard').innerHTML = `
-        <div class="grid-2" style="margin:0">
-          <div class="rows">
-            ${rowHtml('GPU clock', clock, `avg ${fmt(clock?.avg,0)} · peak ${fmt(clock?.max,0)} MHz`, 'info', 'clock')}
-            ${rowHtml('VRAM allocated', vramAlloc, `${fmt(vramAlloc?.value,0)} ${vramAlloc?.unit || ''}`, 'info', 'mem')}
-            <div>
-              <div class="row" style="grid-template-columns:1fr auto"><div>VRAM usage</div><div><strong>${fmt(vramUse?.value)}${vramUse?.unit || '%'}</strong></div></div>
-              <div class="progress"><span style="width:${Math.min(100, vramUse?.value || 0)}%"></span></div>
+        <div class="section-title" style="margin-top:0">Power, clocks, limits</div>
+        <div class="grid grid-cols-2 gap-4 main-grid-2">
+          <div>
+            ${kvRow('GPU clock', `<span class="tiny-value mono">${fmt(gpuClock?.value,0)} MHz current</span>`, pill('core', 'info'))}
+            ${effectiveClock ? kvRow('Effective clock', `<span class="tiny-value mono">avg ${fmt(effectiveClock.avg,0)} MHz · now ${fmt(effectiveClock.value,0)} MHz</span>`, pill('effective', 'info')) : ''}
+            ${memClock ? kvRow('Memory clock', `<span class="tiny-value mono">${fmt(memClock?.value,0)} MHz current</span>`, pill('vram', 'info')) : ''}
+            ${coreVoltage ? kvRow('Core voltage', `<span class="tiny-value mono">${fmt(coreVoltage.value,3)} V</span>`, pill('nvvdd', 'info')) : ''}
+            ${fbvddVoltage ? kvRow('FBVDD voltage', `<span class="tiny-value mono">${fmt(fbvddVoltage.value,3)} V</span>`, pill('memory rail', 'info')) : ''}
+            ${pcie ? kvRow('PCIe link', `<span class="tiny-value mono">${fmt(pcie.value,1)} GT/s</span>`, pill('bus', busLoad && busLoad.value > 0 ? 'info' : 'ok')) : ''}
+          </div>
+          <div>
+            ${nvvddPower && isMeaningfulNumber(nvvddPower.value) ? kvRow('Core input power', `<span class="tiny-value mono">${fmt(nvvddPower.value)}W current</span>`, pill('nvvdd', 'info')) : ''}
+            ${fbvddPower && isMeaningfulNumber(fbvddPower.value) ? kvRow('FBVDD input power', `<span class="tiny-value mono">${fmt(fbvddPower.value)}W current</span>`, pill('memory rail', 'info')) : ''}
+            ${eightPinPower && isMeaningfulNumber(eightPinPower.value) ? kvRow('8-pin input power', `<span class="tiny-value mono">${fmt(eightPinPower.value)}W current</span>`, pill('external', 'info')) : ''}
+            ${busLoad && isMeaningfulNumber(busLoad.value) ? kvRow('Bus load', `<span class="tiny-value mono">${fmt(busLoad.value)}%</span>`, pill('pcie', 'info')) : ''}
+            ${recoveryCount && isMeaningfulNumber(recoveryCount.value) ? kvRow('Recovery count', `<span class="tiny-value mono">${fmtInt(recoveryCount.value)}</span>`, pill('watch', 'warm')) : ''}
+            ${kvRow('Limiter state', `<span class="tiny-value" style="font-size:11px">${perfBadges.join(' ')}</span>`)}
+          </div>
+        </div>`;
+
+      const totalVRam = memoryAvailable && memoryAllocated ? memoryAvailable.value + memoryAllocated.value : null;
+      const usageWidth = Math.min(100, Math.max(0, memoryUsagePct?.value || 0));
+      $('gpuMemoryCard').innerHTML = `
+        <div class="section-title" style="margin-top:0">VRAM + thermal detail</div>
+        <div class="grid gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <div class="eyebrow">Memory usage</div>
+                <div class="metric-big">${fmt(memoryAllocated?.value)}<span> GB allocated</span></div>
+              </div>
+              ${pill(memoryUsagePct?.value >= 85 ? 'high' : memoryUsagePct?.value >= 60 ? 'active' : 'light', memoryUsagePct?.value >= 85 ? 'bad' : memoryUsagePct?.value >= 60 ? 'warm' : 'ok')}
             </div>
+            <div class="mini-progress"><span style="width:${usageWidth}%; background: linear-gradient(90deg, #00D9FF, #00FF88)"></span></div>
+            <div class="mono text-[10px] mt-2" style="color:var(--muted)">${fmt(memoryUsagePct?.value)}% usage · ${totalVRam ? fmt(totalVRam,0) : '--'} GB total · ${fmt(memoryAvailable?.value)} GB free</div>
           </div>
-          <div class="rows">
-            ${rowHtml('Perf limit — power', pick(readings,['perf limit','power']), `${fmtInt(pick(readings,['perf limit','power'])?.value || 0)} samples`, 'info', 'watch')}
-            ${rowHtml('Perf limit — thermal', pick(readings,['perf limit','thermal']), `${fmtInt(pick(readings,['perf limit','thermal'])?.value || 0)} samples`, 'info', 'watch')}
-            ${rowHtml('Perf limit — utilization', pick(readings,['perf limit','utilization']), `${fmtInt(pick(readings,['perf limit','utilization'])?.value || 0)} samples`, 'info', 'expected')}
-            ${rowHtml('PCIe link', pick(readings,['pcie link speed']) || pick(readings,['bus interface']), `${fmt(pick(readings,['pcie link speed'])?.value || pick(readings,['bus interface'])?.value,0)} ${pick(readings,['pcie link speed'])?.unit || ''}`, 'info', 'link')}
-          </div>
+          ${kvRow('Dedicated D3D', `<span class="tiny-value mono">${fmt(memDedicated?.value)} GB</span>`, pill('resident', 'info'))}
+          ${memDynamic && isMeaningfulNumber(memDynamic.value) ? kvRow('Dynamic D3D', `<span class="tiny-value mono">${fmt(memDynamic.value)} GB</span>`, pill('dynamic', 'info')) : ''}
+          ${memoryJunction ? kvRow('Memory junction / hotspot', `<span class="tiny-value mono">${fmt(memoryJunction.value)}°C current · peak ${fmt(memoryJunction.max)}°C</span>`, pill(memoryJunction.value >= 85 ? 'hot' : memoryJunction.value >= 75 ? 'warm' : 'ok', memoryJunction.value >= 85 ? 'bad' : memoryJunction.value >= 75 ? 'warm' : 'ok')) : ''}
+          ${thermalLimit ? kvRow('Thermal limit', `<span class="tiny-value mono">${fmt(thermalLimit.value,0)}°C</span>`, pill('ceiling', 'info')) : ''}
+          ${memCtrl ? kvRow('Memory controller', `<span class="tiny-value mono">avg ${fmt(memCtrl.avg)}% · now ${fmt(memCtrl.value)}%</span>`, pill('activity', memCtrl.value >= 80 ? 'warm' : 'info')) : ''}
         </div>`;
     }
 
@@ -506,57 +659,94 @@
       const avail = pick(readings, ['physical memory available']);
       const load = pick(readings, ['physical memory load']);
       const total = used && avail ? used.value + avail.value : null;
+      const dimmTemps = readings.filter(r => lower(r.sensor).includes('ddr5 dimm') && lower(r.label).includes('temperature'));
+      const hottestDimm = dimmTemps.length ? [...dimmTemps].sort((a, b) => b.value - a.value)[0] : null;
+
       $('memoryStats').innerHTML = [
-        statCard('Total', `${fmt(total,0)}<span> GB</span>`, ''),
-        statCard('Used', `${fmt(used?.value,1)}<span> GB</span>`, `${fmt(load?.avg || load?.value)}% avg`),
-        statCard('Speed', '--', 'Pulling SPD speed later'),
-        statCard('Timings', '--', 'Available if exposed by RAM sensor'),
+        statCard('Total RAM', `${fmt(total,0)}<span> GB</span>`, used ? `${fmt(used.value,1)} GB used · ${fmt(avail.value,1)} GB free` : ''),
+        statCard('Memory load', `${fmt(load?.value ?? load?.avg)}<span>%</span>`, load ? `avg ${fmt(load.avg)}%` : ''),
+        statCard('DIMM thermal', hottestDimm ? `${fmt(hottestDimm.value)}<span>°C</span>` : '--', hottestDimm ? hottestDimm.sensor.replace(/^DDR5 DIMM \[#\d+\]:\s*/, '') : 'No DIMM temp'),
+        statCard('Status', `${(load?.value || load?.avg || 0) > 80 ? 'Pressured' : 'Healthy'}<span></span>`, (load?.value || load?.avg || 0) > 80 ? 'High RAM pressure detected' : 'Headroom looks fine')
       ].join('');
     }
 
     function renderStorage(readings) {
-      const drives = [...new Set(readings.filter(r => lower(r.sensor).includes('drive') || lower(r.sensor).includes('s.m.a.r.t') || lower(r.sensor).includes('nvme')).map(r => r.sensor))].slice(0, 4);
-      $('storageCards').innerHTML = drives.map(sensor => {
-        const rs = readings.filter(r => r.sensor === sensor);
-        const temp = rs.find(r => lower(r.label).includes('temperature'));
-        const life = rs.find(r => lower(r.label).includes('remaining life'));
-        const spare = rs.find(r => lower(r.label).includes('available spare'));
-        const written = rs.find(r => lower(r.label).includes('total host writes') || lower(r.label).includes('total written'));
-        const read = rs.find(r => lower(r.label).includes('total host reads') || lower(r.label).includes('total read'));
-        const failure = rs.find(r => lower(r.label).includes('failure') || lower(r.label).includes('warning'));
-        return `<div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div class="hero-value" style="font-size:14px">${sensor}</div>${pill('healthy','ok')}</div>
-          <div class="rows">
-            ${rowHtml('Temperature', temp, `${fmt(temp?.avg)}°C avg · ${fmt(temp?.max)}°C peak`, statusClass(temp?.max, 45, 55), temp?.max >=45 ? 'warm' : 'ok')}
-            ${rowHtml('Remaining life', life, `${fmt(life?.value,0)}%`, 'ok', 'life')}
-            ${rowHtml('Available spare', spare, `${fmt(spare?.value,0)}%`, 'ok', 'spare')}
-            ${rowHtml('Total written', written, `${fmt(written?.value,0)} ${written?.unit || ''}`, 'info', 'written')}
-            ${rowHtml('Total read', read, `${fmt(read?.value,0)} ${read?.unit || ''}`, 'info', 'read')}
-            ${rowHtml('Failure / Warning', failure, failure ? `${fmtInt(failure.value)}` : 'None', failure?.value ? 'bad' : 'ok', failure?.value ? 'warn' : 'none')}
-          </div>
+      const drives = dedupeDriveSensors(readings);
+      const cards = drives.map(drive => {
+        const rs = drive.readings;
+        const temp = rs.find(r => lower(r.label).includes('temperature') && isMeaningfulNumber(r.value));
+        const life = rs.find(r => lower(r.label).includes('remaining life') && isMeaningfulNumber(r.value));
+        const spare = rs.find(r => lower(r.label).includes('available spare') && isMeaningfulNumber(r.value));
+        const written = rs.find(r => (lower(r.label).includes('total host writes') || lower(r.label).includes('total written')) && isMeaningfulNumber(r.value));
+        const read = rs.find(r => (lower(r.label).includes('total host reads') || lower(r.label).includes('total read')) && isMeaningfulNumber(r.value));
+        const failure = rs.find(r => (lower(r.label).includes('failure') || lower(r.label).includes('warning')) && isMeaningfulNumber(r.value));
+
+        const rows = [
+          temp ? kvRow('Temperature', `<span class="tiny-value mono">avg ${fmt(temp.avg)}°C · peak ${fmt(temp.max)}°C</span>`, pill(temp.max >= 55 ? 'hot' : temp.max >= 45 ? 'warm' : 'ok', statusClass(temp.max, 45, 55))) : '',
+          life ? kvRow('Remaining life', `<span class="tiny-value mono">${fmt(life.value,0)}%</span>`, pill('health', 'ok')) : '',
+          spare ? kvRow('Available spare', `<span class="tiny-value mono">${fmt(spare.value,0)}%</span>`, pill('reserve', 'ok')) : '',
+          written ? kvRow('Total written', `<span class="tiny-value mono">${fmt(written.value,0)} ${written.unit || ''}</span>`, pill('writes', 'info')) : '',
+          read ? kvRow('Total read', `<span class="tiny-value mono">${fmt(read.value,0)} ${read.unit || ''}</span>`, pill('reads', 'info')) : '',
+          failure ? kvRow('Failure / warning', `<span class="tiny-value mono">${fmtInt(failure.value)}</span>`, pill('alert', 'bad')) : ''
+        ].filter(Boolean).join('');
+
+        return `<div class="glass rounded-xl p-4">
+          <div class="bracket tl"></div><div class="bracket br"></div>
+          <div class="eyebrow">Drive</div>
+          <div class="metric-big" style="font-size:15px">${drive.name}</div>
+          <div class="mt-2">${rows || `<div class="mono text-[11px]" style="color:var(--muted)">No meaningful SMART data to show.</div>`}</div>
         </div>`;
-      }).join('');
-      if (!drives.length) $('storageCards').innerHTML = '<div class="card">No storage SMART / NVMe sensors found yet.</div>';
+      });
+
+      $('storageCards').innerHTML = cards.length ? cards.join('') : `<div class="glass rounded-xl p-4"><div class="mono text-[11px]" style="color:var(--muted)">No storage sensors found.</div></div>`;
     }
 
     function renderHealth(readings) {
       const items = [];
       const cpuPkg = pick(readings, ['cpu package']);
-      const gpuTemp = pick(readings, ['gpu temperature']) || pick(readings, ['gpu core temperature']);
+      const gpuTemp = pick(readings, ['gpu temperature']);
+      const gpuHot = pick(readings, ['gpu hot spot temperature']);
       const memLoad = pick(readings, ['physical memory load']);
-      const nvmeTemps = readings.filter(r => (lower(r.sensor).includes('drive') || lower(r.sensor).includes('nvme')) && lower(r.label).includes('temperature'));
+      const nvmeDrives = dedupeDriveSensors(readings);
+      const nvmeTemps = nvmeDrives
+        .map(d => d.readings.find(r => lower(r.label).includes('temperature') && isMeaningfulNumber(r.max || r.value)))
+        .filter(Boolean);
 
-      items.push({cls:'green', text:`CPU package is ${fmt(cpuPkg?.avg)}°C avg, peak ${fmt(cpuPkg?.max)}°C. ${cpuPkg?.max < 85 ? 'Thermals look healthy.' : 'Keep an eye on load spikes.'}`});
-      items.push({cls:'green', text:`GPU is ${fmt(gpuTemp?.avg)}°C avg with ${fmt(gpuTemp?.max)}°C peak. ${gpuTemp?.avg < 70 ? 'GPU is running cool.' : 'GPU is getting warm under load.'}`});
-      items.push({cls: (memLoad?.value || memLoad?.avg) > 80 ? 'amber' : 'green', text:`Memory load is ${fmt(memLoad?.value || memLoad?.avg)}%. ${(memLoad?.value || memLoad?.avg) > 80 ? 'High RAM pressure detected.' : 'Memory headroom looks fine.'}`});
-      if (nvmeTemps.length) {
-        const hottest = Math.max(...nvmeTemps.map(r => r.max || r.value || 0));
-        items.push({cls: hottest >= 50 ? 'amber' : 'blue', text:`NVMe temperatures peak at ${fmt(hottest)}°C. ${hottest >= 50 ? 'A little warm, worth watching under sustained load.' : 'Storage temperatures are in a safe range.'}`});
+      if (cpuPkg) {
+        items.push({
+          cls: cpuPkg.max >= 85 ? 'amber' : 'green',
+          text: `CPU package is averaging ${fmt(cpuPkg.avg)}°C with a ${fmt(cpuPkg.max)}°C peak. ${cpuPkg.max < 80 ? 'There is healthy thermal headroom right now.' : 'Thermals are still acceptable, but watch sustained heavy loads.'}`
+        });
       }
+
+      if (gpuTemp && gpuHot) {
+        const delta = gpuHot.value - gpuTemp.value;
+        items.push({
+          cls: gpuHot.value >= 80 ? 'amber' : 'blue',
+          text: `GPU core is ${fmt(gpuTemp.value)}°C while hotspot or memory junction telemetry is ${fmt(gpuHot.value)}°C, a ${fmt(delta)}°C spread. ${gpuHot.value < 75 ? 'That looks comfortable.' : 'The memory side is warming up under load.'}`
+        });
+      }
+
+      if (memLoad) {
+        items.push({
+          cls: (memLoad.value || memLoad.avg) > 80 ? 'amber' : 'green',
+          text: `System memory load is ${fmt(memLoad.value || memLoad.avg)}%. ${(memLoad.value || memLoad.avg) > 80 ? 'RAM pressure is getting high.' : 'Memory headroom looks fine.'}`
+        });
+      }
+
+      if (nvmeTemps.length) {
+        const hottest = nvmeTemps.reduce((m, r) => Math.max(m, r.max || r.value || 0), 0);
+        items.push({
+          cls: hottest >= 50 ? 'amber' : 'blue',
+          text: `The hottest NVMe drive peaked at ${fmt(hottest)}°C. ${hottest >= 50 ? 'A little warm under sustained activity, but still manageable.' : 'Storage temperatures are in a safe range.'}`
+        });
+      }
+
       $('healthList').innerHTML = items.map(i => `<div class="health-item ${i.cls}">${i.text}</div>`).join('');
-      $('healthPill').textContent = items.some(i => i.cls === 'bad') ? 'Critical faults detected' : 'No critical faults';
-      $('healthPill').style.background = items.some(i => i.cls === 'bad') ? 'var(--red-bg)' : 'var(--green-bg)';
-      $('healthPill').style.color = items.some(i => i.cls === 'bad') ? '#ff9898' : '#8fe58f';
+      const hasBad = items.some(i => i.cls === 'bad');
+      const hasAmber = items.some(i => i.cls === 'amber');
+      $('healthPill').className = `pill ${hasBad ? 'bad' : hasAmber ? 'warm' : 'ok'}`;
+      $('healthPill').textContent = hasBad ? 'Critical' : hasAmber ? 'Watching' : 'Healthy';
     }
 
     function render(readings, meta) {
@@ -579,8 +769,15 @@
         const data = JSON.parse(e.data);
         if (data.readings) render(data.readings, data.meta || {});
       };
-      socket.onopen = () => { $('healthPill').textContent = 'Live'; };
-      socket.onclose = () => { $('healthPill').textContent = 'Reconnecting...'; setTimeout(connect, 1500); };
+      socket.onopen = () => {
+        $('healthPill').textContent = 'Live';
+        $('healthPill').className = 'pill ok';
+      };
+      socket.onclose = () => {
+        $('healthPill').textContent = 'Reconnecting';
+        $('healthPill').className = 'pill info';
+        setTimeout(connect, 1500);
+      };
     }
 
     $('refreshBtn').addEventListener('click', async () => {
